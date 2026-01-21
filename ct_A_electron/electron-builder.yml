@@ -1,0 +1,64 @@
+appId: cg.congotelecom.ctachats
+productName: CT_Achats
+copyright: Copyright (c) 2024 Congo Telecom
+
+directories:
+  output: release
+  buildResources: resources
+
+files:
+  - dist/**/*
+
+extraResources:
+  # Backend Laravel
+  - from: "../ct_A_backend"
+    to: "backend"
+    filter:
+      - "**/*"
+      - "!vendor/**/*"
+      - "!node_modules/**/*"
+      - "!.git/**/*"
+      - "!storage/logs/*"
+      - "!storage/framework/cache/data/*"
+      - "!storage/framework/sessions/*"
+      - "!storage/framework/views/*"
+      - "!.env"
+  # Frontend compile
+  - from: "../ct_A_frontend/dist"
+    to: "frontend"
+
+win:
+  target:
+    - target: nsis
+      arch: [x64]
+  icon: resources/icons/icon.png
+  signAndEditExecutable: false
+  extraResources:
+    - from: "resources/php-portable"
+      to: "php"
+      filter:
+        - "**/*"
+
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: CT_Achats
+
+mac:
+  target:
+    - target: dmg
+      arch: [x64, arm64]
+  icon: resources/icons/icon.icns
+  category: public.app-category.business
+
+dmg:
+  contents:
+    - x: 130
+      y: 220
+    - x: 410
+      y: 220
+      type: link
+      path: /Applications

@@ -1,0 +1,155 @@
+name: Build Desktop Apps
+
+on:
+  # Declenchement manuel uniquement (ne touche pas master)
+  workflow_dispatch:
+    inputs:
+      build_windows:
+        description: 'Build Windows'
+        required: true
+        default: true
+        type: boolean
+      build_macos:
+        description: 'Build macOS'
+        required: true
+        default: true
+        type: boolean
+
+  # Ou sur push vers une branche specifique (pas master)
+  push:
+    branches:
+      - electron-build
+      - release/*
+
+jobs:
+  # ============================================
+  # Build Windows
+  # ============================================
+  build-windows:
+    if: ${{ github.event_name == 'push' || github.event.inputs.build_windows == 'true' }}
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: ct_A_electron/package-lock.json
+
+      - name: Install Electron dependencies
+        working-directory: ct_A_electron
+        run: npm ci
+
+      - name: Install Frontend dependencies
+        working-directory: ct_A_frontend
+        run: npm ci
+
+      - name: Download PHP for Windows
+        working-directory: ct_A_electron
+        run: node scripts/download-php.js
+
+      - name: Build Electron main process
+        working-directory: ct_A_electron
+        run: npm run build:main
+
+      - name: Build Frontend
+        working-directory: ct_A_frontend
+        run: npx vite build
+
+      - name: Build Windows Installer
+        working-directory: ct_A_electron
+        run: npx electron-builder --win --config.win.signAndEditExecutable=false
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload Windows Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: CT_Achats-Windows
+          path: |
+            ct_A_electron/release/*.exe
+            ct_A_electron/release/*.exe.blockmap
+          retention-days: 30
+
+  # ============================================
+  # Build macOS
+  # ============================================
+  build-macos:
+    if: ${{ github.event_name == 'push' || github.event.inputs.build_macos == 'true' }}
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: ct_A_electron/package-lock.json
+
+      - name: Install Electron dependencies
+        working-directory: ct_A_electron
+        run: npm ci
+
+      - name: Install Frontend dependencies
+        working-directory: ct_A_frontend
+        run: npm ci
+
+      - name: Build Electron main process
+        working-directory: ct_A_electron
+        run: npm run build:main
+
+      - name: Build Frontend
+        working-directory: ct_A_frontend
+        run: npx vite build
+
+      - name: Build macOS DMG
+        working-directory: ct_A_electron
+        run: npx electron-builder --mac
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Pour signer (optionnel, necessite certificat Apple):
+          # CSC_LINK: ${{ secrets.MAC_CERTIFICATE }}
+          # CSC_KEY_PASSWORD: ${{ secrets.MAC_CERTIFICATE_PASSWORD }}
+          # APPLE_ID: ${{ secrets.APPLE_ID }}
+          # APPLE_ID_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
+
+      - name: Upload macOS Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: CT_Achats-macOS
+          path: |
+            ct_A_electron/release/*.dmg
+            ct_A_electron/release/*.dmg.blockmap
+          retention-days: 30
+
+  # ============================================
+  # Create Release (optionnel)
+  # ============================================
+  create-release:
+    needs: [build-windows, build-macos]
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            dist/CT_Achats-Windows/*.exe
+            dist/CT_Achats-macOS/*.dmg
+          draft: true
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

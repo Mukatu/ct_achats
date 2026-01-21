@@ -1,0 +1,168 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Variables CSS CT_Achats */
+:root {
+  --ct-blue: #3b82f6;
+  --ct-orange: #f97316;
+}
+
+/* Classes utilitaires personnalisées */
+@layer components {
+  .btn {
+    @apply px-4 py-2 rounded-lg font-medium transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2;
+  }
+
+  .btn-primary {
+    @apply btn bg-ct-orange-500 text-white hover:bg-ct-orange-600 focus:ring-ct-orange-500;
+  }
+
+  .btn-secondary {
+    @apply btn bg-ct-blue-500 text-white hover:bg-ct-blue-600 focus:ring-ct-blue-500;
+  }
+
+  .btn-outline {
+    @apply btn border-2 border-ct-blue-500 text-ct-blue-500 hover:bg-ct-blue-50 focus:ring-ct-blue-500;
+  }
+
+  .btn-ghost {
+    @apply btn text-gray-600 hover:bg-gray-100 focus:ring-gray-300;
+  }
+
+  .btn-danger {
+    @apply btn bg-red-500 text-white hover:bg-red-600 focus:ring-red-500;
+  }
+
+  .btn-sm {
+    @apply px-3 py-1.5 text-sm;
+  }
+
+  .btn-lg {
+    @apply px-6 py-3 text-lg;
+  }
+
+  .input {
+    @apply w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ct-blue-500 focus:border-ct-blue-500 transition-colors;
+  }
+
+  .input-error {
+    @apply border-red-500 focus:ring-red-500 focus:border-red-500;
+  }
+
+  .label {
+    @apply block text-sm font-medium text-gray-700 mb-1;
+  }
+
+  .card {
+    @apply bg-white rounded-xl shadow-md border border-gray-200 p-6;
+  }
+
+  .badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+  }
+
+  .badge-blue {
+    @apply badge bg-blue-100 text-blue-800;
+  }
+
+  .badge-green {
+    @apply badge bg-green-100 text-green-800;
+  }
+
+  .badge-yellow {
+    @apply badge bg-yellow-100 text-yellow-800;
+  }
+
+  .badge-orange {
+    @apply badge bg-orange-100 text-orange-800;
+  }
+
+  .badge-red {
+    @apply badge bg-red-100 text-red-800;
+  }
+
+  .badge-gray {
+    @apply badge bg-gray-100 text-gray-800;
+  }
+
+  .badge-purple {
+    @apply badge bg-purple-100 text-purple-800;
+  }
+
+  /* Table styles */
+  .table-container {
+    @apply overflow-x-auto rounded-lg border border-gray-300 bg-white shadow-sm;
+  }
+
+  .table {
+    @apply min-w-full divide-y divide-gray-200;
+  }
+
+  .table th {
+    @apply px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider bg-gray-100;
+  }
+
+  .table td {
+    @apply px-4 py-3 text-sm text-gray-900 whitespace-nowrap bg-white;
+  }
+
+  .table tbody tr {
+    @apply hover:bg-gray-50 transition-colors;
+  }
+
+  /* Sidebar active link */
+  .nav-link {
+    @apply flex items-center px-4 py-2.5 text-gray-600 rounded-lg transition-colors hover:bg-ct-blue-50 hover:text-ct-blue-600;
+  }
+
+  .nav-link.active {
+    @apply bg-ct-blue-500 text-white hover:bg-ct-blue-600 hover:text-white;
+  }
+
+  .nav-link-icon {
+    @apply w-5 h-5 mr-3;
+  }
+}
+
+/* Scrollbar personnalisée */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-gray-100;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-gray-300 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-gray-400;
+}
+
+/* Animations */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+.slide-enter-active,
+.slide-leave-active {
+  transition: transform 0.3s ease;
+}
+
+.slide-enter-from {
+  transform: translateX(-100%);
+}
+
+.slide-leave-to {
+  transform: translateX(-100%);
+}

@@ -1,0 +1,4 @@
+zone_code*,direction_code*,service_code,demandeur_nom*,objet*,description_detaillee,quantite_souhaitee,"date_besoin (JJ/MM/AAAA)","estimation (FCFA)*",commentaire
+DRA,DIP,CAB,Jean DUPONT,Fournitures de bureau,Achat de ramettes de papier A4,100,15/02/2026,250000,Besoin urgent
+DRA,DOM,,Marie MARTIN,Materiel informatique,Acquisition de 3 ordinateurs portables,3,20/02/2026,1500000,Pour nouveaux employes
+DRC,QHSE,CDG,Pierre DURAND,Equipements de protection,Casques et gants de securite,50,28/02/2026,750000,Renouvellement annuel
