@@ -228,6 +228,10 @@ class DashboardController extends Controller
             ->where('statut', StatutEB::EN_SUSPENS)
             ->count();
 
+        $ebEnCoursAch = ExpressionBesoin::whereYear('date_expression', $annee)
+            ->where('statut', StatutEB::EN_COURS_ACH)
+            ->count();
+
         // Montants par catégorie (estimation)
         $montantAboutis = ExpressionBesoin::whereYear('date_expression', $annee)
             ->whereIn('statut', $statutsAboutis)
@@ -270,12 +274,29 @@ class DashboardController extends Controller
                 ];
             });
 
+        // Répartition par acheteur (EB en cours)
+        $repartitionAcheteurs = ExpressionBesoin::whereYear('date_expression', $annee)
+            ->whereIn('statut', $statutsEnCours)
+            ->whereNotNull('acheteur_id')
+            ->join('users', 'expressions_besoin.acheteur_id', '=', 'users.id')
+            ->select('users.id', 'users.nom', 'users.prenom', DB::raw('COUNT(*) as nombre'), DB::raw('SUM(estimation) as montant'))
+            ->groupBy('users.id', 'users.nom', 'users.prenom')
+            ->orderByDesc('nombre')
+            ->get()
+            ->map(fn($item) => [
+                'acheteur_id' => $item->id,
+                'acheteur' => $item->prenom . ' ' . $item->nom,
+                'nombre' => $item->nombre,
+                'montant' => $item->montant ?? 0,
+            ]);
+
         return [
             'total' => $ebTotal,
             'aboutis' => $ebAboutis,
             'en_cours' => $ebEnCours,
             'annules' => $ebAnnules,
             'en_suspens' => $ebEnSuspens,
+            'en_cours_ach' => $ebEnCoursAch,
             'taux_aboutissement' => $tauxAboutissement,
             'delai_moyen_jours' => $delaiMoyen ? round($delaiMoyen, 1) : null,
             'montants' => [
@@ -284,6 +305,7 @@ class DashboardController extends Controller
                 'annules' => $montantAnnules,
             ],
             'repartition_statuts' => $repartitionStatuts,
+            'repartition_acheteurs' => $repartitionAcheteurs,
         ];
     }
 
@@ -312,6 +334,7 @@ class DashboardController extends Controller
         $daTotal = $baseQuery()->count();
         $daAboutis = $baseQuery()->whereIn('statut', $statutsAboutis)->count();
         $daEnSuspens = $baseQuery()->where('statut', StatutDA::EN_SUSPENS)->count();
+        $daEnCoursAch = $baseQuery()->where('statut', StatutDA::EN_COURS_ACH)->count();
         $daCDG = $baseQuery()->where('statut', StatutDA::EN_COURS_CDG)->count();
         $daDFC = $baseQuery()->where('statut', StatutDA::EN_COURS_DFC)->count();
 
@@ -346,10 +369,27 @@ class DashboardController extends Controller
                 'montant' => $item->montant ?? 0,
             ]);
 
+        // Répartition par acheteur (DA en cours)
+        $repartitionAcheteurs = $baseQuery()
+            ->whereIn('statut', $statutsEnCours)
+            ->whereNotNull('acheteur_id')
+            ->join('users', 'demandes_achat.acheteur_id', '=', 'users.id')
+            ->select('users.id', 'users.nom', 'users.prenom', DB::raw('COUNT(*) as nombre'), DB::raw('SUM(montant) as montant'))
+            ->groupBy('users.id', 'users.nom', 'users.prenom')
+            ->orderByDesc('nombre')
+            ->get()
+            ->map(fn($item) => [
+                'acheteur_id' => $item->id,
+                'acheteur' => $item->prenom . ' ' . $item->nom,
+                'nombre' => $item->nombre,
+                'montant' => $item->montant ?? 0,
+            ]);
+
         return [
             'total' => $daTotal,
             'aboutis' => $daAboutis,
             'en_suspens' => $daEnSuspens,
+            'en_cours_ach' => $daEnCoursAch,
             'cdg' => $daCDG,
             'dfc' => $daDFC,
             'taux_aboutissement' => $tauxAboutissement,
@@ -361,6 +401,7 @@ class DashboardController extends Controller
                 'dfc' => $montantDFC,
             ],
             'repartition_statuts' => $repartitionStatuts,
+            'repartition_acheteurs' => $repartitionAcheteurs,
         ];
     }
 
@@ -388,6 +429,10 @@ class DashboardController extends Controller
         $traitees = $baseQuery()->where('statut', StatutDA::TRAITE)->count();
         $cloturees = $baseQuery()->whereNotNull('date_cloture')->count();
         $enCours = $baseQuery()->whereIn('statut', $statutsEnCours)->count();
+        $enSuspens = $baseQuery()->where('statut', StatutDA::EN_SUSPENS)->count();
+        $enCoursAch = $baseQuery()->where('statut', StatutDA::EN_COURS_ACH)->count();
+        $cdg = $baseQuery()->where('statut', StatutDA::EN_COURS_CDG)->count();
+        $dg = $baseQuery()->where('statut', StatutDA::EN_COURS_DG)->count();
         $annulees = $baseQuery()->where('statut', StatutDA::ANNULE)->count();
 
         // Montants
@@ -426,12 +471,32 @@ class DashboardController extends Controller
                 'montant' => $item->montant ?? 0,
             ]);
 
+        // Répartition par acheteur (DAC en cours)
+        $repartitionAcheteurs = $baseQuery()
+            ->whereIn('statut', $statutsEnCours)
+            ->whereNotNull('acheteur_id')
+            ->join('users', 'demandes_achat.acheteur_id', '=', 'users.id')
+            ->select('users.id', 'users.nom', 'users.prenom', DB::raw('COUNT(*) as nombre'), DB::raw('SUM(montant) as montant'))
+            ->groupBy('users.id', 'users.nom', 'users.prenom')
+            ->orderByDesc('nombre')
+            ->get()
+            ->map(fn($item) => [
+                'acheteur_id' => $item->id,
+                'acheteur' => $item->prenom . ' ' . $item->nom,
+                'nombre' => $item->nombre,
+                'montant' => $item->montant ?? 0,
+            ]);
+
         return [
             'total' => $total,
             'traitees' => $traitees,
             'cloturees' => $cloturees,
             'en_attente_cloture' => $traitees - $cloturees,
             'en_cours' => $enCours,
+            'en_suspens' => $enSuspens,
+            'en_cours_ach' => $enCoursAch,
+            'cdg' => $cdg,
+            'dg' => $dg,
             'annulees' => $annulees,
             'taux_aboutissement' => $tauxAboutissement,
             'taux_cloture' => $tauxCloture,
@@ -443,6 +508,7 @@ class DashboardController extends Controller
                 'annulees' => $montantAnnulees,
             ],
             'repartition_statuts' => $repartitionStatuts,
+            'repartition_acheteurs' => $repartitionAcheteurs,
         ];
     }
 
@@ -481,6 +547,10 @@ class DashboardController extends Controller
 
         $bcDG = BonCommande::whereYear('date_bc', $annee)
             ->where('statut', StatutBC::EN_COURS_DG)
+            ->count();
+
+        $bcEnCoursA = BonCommande::whereYear('date_bc', $annee)
+            ->where('statut', StatutBC::EN_COURS_A)
             ->count();
 
         // Montants par catégorie
@@ -527,24 +597,42 @@ class DashboardController extends Controller
             ->filter()
             ->avg();
 
-        // Répartition par statut détaillé
-        $repartitionStatuts = BonCommande::whereYear('date_bc', $annee)
-            ->select('statut', DB::raw('COUNT(*) as nombre'), DB::raw('SUM(montant_ttc_xaf) as montant'))
-            ->groupBy('statut')
+        // Répartition par direction
+        $repartitionDirections = BonCommande::whereYear('date_bc', $annee)
+            ->whereNotIn('statut', [StatutBC::ANNULE])
+            ->join('directions', 'bons_commande.direction_id', '=', 'directions.id')
+            ->select('directions.id', 'directions.libelle_court', DB::raw('COUNT(*) as nombre'), DB::raw('SUM(montant_ttc_xaf) as montant'))
+            ->groupBy('directions.id', 'directions.libelle_court')
+            ->orderByDesc('montant')
             ->get()
-            ->map(function ($item) {
-                return [
-                    'statut' => $item->statut,
-                    'label' => $item->statut instanceof StatutBC ? $item->statut->label() : $item->statut,
-                    'nombre' => $item->nombre,
-                    'montant' => $item->montant ?? 0,
-                ];
-            });
+            ->map(fn($item) => [
+                'direction_id' => $item->id,
+                'direction' => $item->libelle_court,
+                'nombre' => $item->nombre,
+                'montant' => $item->montant ?? 0,
+            ]);
+
+        // Répartition par acheteur (BC en cours)
+        $repartitionAcheteurs = BonCommande::whereYear('date_bc', $annee)
+            ->whereIn('statut', $statutsEnCours)
+            ->whereNotNull('acheteur_id')
+            ->join('users', 'bons_commande.acheteur_id', '=', 'users.id')
+            ->select('users.id', 'users.nom', 'users.prenom', DB::raw('COUNT(*) as nombre'), DB::raw('SUM(montant_ttc_xaf) as montant'))
+            ->groupBy('users.id', 'users.nom', 'users.prenom')
+            ->orderByDesc('nombre')
+            ->get()
+            ->map(fn($item) => [
+                'acheteur_id' => $item->id,
+                'acheteur' => $item->prenom . ' ' . $item->nom,
+                'nombre' => $item->nombre,
+                'montant' => $item->montant ?? 0,
+            ]);
 
         return [
             'total' => $bcTotal,
             'aboutis' => $bcAboutis,
             'en_suspens' => $bcEnSuspens,
+            'en_cours_a' => $bcEnCoursA,
             'cdg' => $bcCDG,
             'dg' => $bcDG,
             'taux_aboutissement' => $tauxAboutissement,
@@ -555,7 +643,8 @@ class DashboardController extends Controller
                 'cdg' => $montantCDG,
                 'dg' => $montantDG,
             ],
-            'repartition_statuts' => $repartitionStatuts,
+            'repartition_directions' => $repartitionDirections,
+            'repartition_acheteurs' => $repartitionAcheteurs,
         ];
     }
 
@@ -638,6 +727,21 @@ class DashboardController extends Controller
             ->limit(5)
             ->get();
 
+        // Répartition par direction
+        $repartitionDirections = Contrat::where('contrats.statut', StatutContrat::ACTIF)
+            ->whereNotNull('contrats.direction_id')
+            ->join('directions', 'contrats.direction_id', '=', 'directions.id')
+            ->select('directions.id', 'directions.libelle_court', DB::raw('COUNT(*) as nombre'), DB::raw('SUM(contrats.montant_annuel) as montant'))
+            ->groupBy('directions.id', 'directions.libelle_court')
+            ->orderByDesc('montant')
+            ->get()
+            ->map(fn($item) => [
+                'direction_id' => $item->id,
+                'direction' => $item->libelle_court,
+                'nombre' => $item->nombre,
+                'montant' => $item->montant ?? 0,
+            ]);
+
         return [
             'contrats_actifs' => $contratsActifs,
             'contrats_a_echeance' => $contratsAEcheance,
@@ -657,6 +761,7 @@ class DashboardController extends Controller
                 'en_retard' => $montantEcheancesEnRetard,
             ],
             'top_types_contrat' => $topTypesContrat,
+            'repartition_directions' => $repartitionDirections,
         ];
     }
 }

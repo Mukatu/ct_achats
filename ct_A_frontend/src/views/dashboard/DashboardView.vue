@@ -143,13 +143,13 @@ onMounted(async () => {
 
         <div class="card">
           <div class="flex items-center">
-            <div class="p-3 rounded-lg bg-purple-100">
-              <ArrowTrendingUpIcon class="w-6 h-6 text-purple-600" />
+            <div class="p-3 rounded-lg bg-teal-100">
+              <DocumentDuplicateIcon class="w-6 h-6 text-teal-600" />
             </div>
             <div class="ml-4">
-              <p class="text-sm text-gray-500">Total engage</p>
+              <p class="text-sm text-gray-500">Engagements contractuels</p>
               <p class="text-lg font-bold text-gray-900">
-                {{ formatMontant(stats?.totaux?.montant_engage) }}
+                {{ formatMontant(stats?.stats_contrat?.montant_annuel_actif) }}
               </p>
             </div>
           </div>
@@ -159,7 +159,7 @@ onMounted(async () => {
       <!-- Détail des engagements -->
       <div class="card mb-8">
         <h2 class="text-lg font-semibold text-gray-900 mb-4">Repartition des engagements ({{ stats?.annee }})</h2>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div class="p-4 bg-green-50 rounded-lg">
             <div class="flex items-center justify-between">
               <div class="flex items-center">
@@ -179,6 +179,16 @@ onMounted(async () => {
               <span class="text-lg font-bold text-orange-700">{{ formatMontant(stats?.totaux?.montant_engage_dac) }}</span>
             </div>
             <p class="text-xs text-gray-500 mt-1">Depenses caisse traitees</p>
+          </div>
+          <div class="p-4 bg-teal-50 rounded-lg">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center">
+                <DocumentDuplicateIcon class="w-5 h-5 text-teal-600 mr-2" />
+                <span class="text-sm font-medium text-gray-700">Engagements Contrats</span>
+              </div>
+              <span class="text-lg font-bold text-teal-700">{{ formatMontant(stats?.stats_contrat?.montant_annuel_actif) }}</span>
+            </div>
+            <p class="text-xs text-gray-500 mt-1">Contrats actifs annuels</p>
           </div>
           <div class="p-4 bg-purple-50 rounded-lg">
             <div class="flex items-center justify-between">
@@ -214,9 +224,9 @@ onMounted(async () => {
             <p class="text-3xl font-bold text-blue-600">{{ stats.stats_eb.en_cours }}</p>
             <p class="text-sm text-gray-500">En cours</p>
           </div>
-          <div class="text-center p-4 bg-red-50 rounded-lg">
-            <p class="text-3xl font-bold text-red-600">{{ stats.stats_eb.annules }}</p>
-            <p class="text-sm text-gray-500">Annules</p>
+          <div class="text-center p-4 bg-cyan-50 rounded-lg">
+            <p class="text-3xl font-bold text-cyan-600">{{ stats.stats_eb.en_cours_ach || 0 }}</p>
+            <p class="text-sm text-gray-500">En cours ACH</p>
           </div>
           <div class="text-center p-4 bg-yellow-50 rounded-lg">
             <p class="text-3xl font-bold text-yellow-600">{{ stats.stats_eb.en_suspens || 0 }}</p>
@@ -281,6 +291,29 @@ onMounted(async () => {
             </div>
           </div>
         </div>
+
+        <!-- Répartition par Acheteur -->
+        <div v-if="stats.stats_eb.repartition_acheteurs?.length" class="mt-6 pt-6 border-t border-gray-200">
+          <h3 class="text-sm font-medium text-gray-700 mb-4">Repartition par Acheteur (en cours)</h3>
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="border-b border-gray-200">
+                  <th class="text-left py-2 font-medium text-gray-600">Acheteur</th>
+                  <th class="text-right py-2 font-medium text-gray-600">Nombre</th>
+                  <th class="text-right py-2 font-medium text-gray-600">Montant</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="item in stats.stats_eb.repartition_acheteurs" :key="item.acheteur_id" class="border-b border-gray-100">
+                  <td class="py-2">{{ item.acheteur }}</td>
+                  <td class="text-right py-2 font-medium">{{ item.nombre }}</td>
+                  <td class="text-right py-2 text-gray-600">{{ formatMontant(item.montant) }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
 
       <!-- Statistiques DA - Aboutissement -->
@@ -291,7 +324,7 @@ onMounted(async () => {
         </h2>
 
         <!-- Indicateurs principaux -->
-        <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
+        <div class="grid grid-cols-2 md:grid-cols-6 gap-4 mb-6">
           <div class="text-center p-4 bg-gray-50 rounded-lg">
             <p class="text-3xl font-bold text-gray-900">{{ stats.stats_da.total }}</p>
             <p class="text-sm text-gray-500">Total DA</p>
@@ -299,6 +332,10 @@ onMounted(async () => {
           <div class="text-center p-4 bg-yellow-50 rounded-lg">
             <p class="text-3xl font-bold text-yellow-600">{{ stats.stats_da.en_suspens || 0 }}</p>
             <p class="text-sm text-gray-500">En suspens</p>
+          </div>
+          <div class="text-center p-4 bg-cyan-50 rounded-lg">
+            <p class="text-3xl font-bold text-cyan-600">{{ stats.stats_da.en_cours_ach || 0 }}</p>
+            <p class="text-sm text-gray-500">En cours ACH</p>
           </div>
           <div class="text-center p-4 bg-blue-50 rounded-lg">
             <p class="text-3xl font-bold text-blue-600">{{ stats.stats_da.cdg || 0 }}</p>
@@ -378,6 +415,29 @@ onMounted(async () => {
             </div>
           </div>
         </div>
+
+        <!-- Répartition par Acheteur -->
+        <div v-if="stats.stats_da.repartition_acheteurs?.length" class="mt-6 pt-6 border-t border-gray-200">
+          <h3 class="text-sm font-medium text-gray-700 mb-4">Repartition par Acheteur (en cours)</h3>
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="border-b border-gray-200">
+                  <th class="text-left py-2 font-medium text-gray-600">Acheteur</th>
+                  <th class="text-right py-2 font-medium text-gray-600">Nombre</th>
+                  <th class="text-right py-2 font-medium text-gray-600">Montant</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="item in stats.stats_da.repartition_acheteurs" :key="item.acheteur_id" class="border-b border-gray-100">
+                  <td class="py-2">{{ item.acheteur }}</td>
+                  <td class="text-right py-2 font-medium">{{ item.nombre }}</td>
+                  <td class="text-right py-2 text-gray-600">{{ formatMontant(item.montant) }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
 
       <!-- Statistiques DAC - Demandes Caisse -->
@@ -388,26 +448,30 @@ onMounted(async () => {
         </h2>
 
         <!-- Indicateurs principaux -->
-        <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
+        <div class="grid grid-cols-2 md:grid-cols-6 gap-4 mb-6">
           <div class="text-center p-4 bg-gray-50 rounded-lg">
             <p class="text-3xl font-bold text-gray-900">{{ stats.stats_dac.total }}</p>
             <p class="text-sm text-gray-500">Total DAC</p>
           </div>
+          <div class="text-center p-4 bg-yellow-50 rounded-lg">
+            <p class="text-3xl font-bold text-yellow-600">{{ stats.stats_dac.en_suspens || 0 }}</p>
+            <p class="text-sm text-gray-500">En suspens</p>
+          </div>
+          <div class="text-center p-4 bg-cyan-50 rounded-lg">
+            <p class="text-3xl font-bold text-cyan-600">{{ stats.stats_dac.en_cours_ach || 0 }}</p>
+            <p class="text-sm text-gray-500">En cours ACH</p>
+          </div>
+          <div class="text-center p-4 bg-blue-50 rounded-lg">
+            <p class="text-3xl font-bold text-blue-600">{{ stats.stats_dac.cdg || 0 }}</p>
+            <p class="text-sm text-gray-500">CDG</p>
+          </div>
+          <div class="text-center p-4 bg-purple-50 rounded-lg">
+            <p class="text-3xl font-bold text-purple-600">{{ stats.stats_dac.dg || 0 }}</p>
+            <p class="text-sm text-gray-500">DG</p>
+          </div>
           <div class="text-center p-4 bg-green-50 rounded-lg">
             <p class="text-3xl font-bold text-green-600">{{ stats.stats_dac.traitees }}</p>
             <p class="text-sm text-gray-500">Traitees</p>
-          </div>
-          <div class="text-center p-4 bg-emerald-50 rounded-lg">
-            <p class="text-3xl font-bold text-emerald-600">{{ stats.stats_dac.cloturees }}</p>
-            <p class="text-sm text-gray-500">Cloturees</p>
-          </div>
-          <div class="text-center p-4 bg-blue-50 rounded-lg">
-            <p class="text-3xl font-bold text-blue-600">{{ stats.stats_dac.en_cours }}</p>
-            <p class="text-sm text-gray-500">En cours</p>
-          </div>
-          <div class="text-center p-4 bg-red-50 rounded-lg">
-            <p class="text-3xl font-bold text-red-600">{{ stats.stats_dac.annulees }}</p>
-            <p class="text-sm text-gray-500">Annulees</p>
           </div>
         </div>
 
@@ -501,6 +565,29 @@ onMounted(async () => {
             </div>
           </div>
         </div>
+
+        <!-- Répartition par Acheteur -->
+        <div v-if="stats.stats_dac.repartition_acheteurs?.length" class="mt-6 pt-6 border-t border-gray-200">
+          <h3 class="text-sm font-medium text-gray-700 mb-4">Repartition par Acheteur (en cours)</h3>
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="border-b border-gray-200">
+                  <th class="text-left py-2 font-medium text-gray-600">Acheteur</th>
+                  <th class="text-right py-2 font-medium text-gray-600">Nombre</th>
+                  <th class="text-right py-2 font-medium text-gray-600">Montant</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="item in stats.stats_dac.repartition_acheteurs" :key="item.acheteur_id" class="border-b border-gray-100">
+                  <td class="py-2">{{ item.acheteur }}</td>
+                  <td class="text-right py-2 font-medium">{{ item.nombre }}</td>
+                  <td class="text-right py-2 text-gray-600">{{ formatMontant(item.montant) }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
 
       <!-- Statistiques BC - Aboutissement -->
@@ -511,7 +598,7 @@ onMounted(async () => {
         </h2>
 
         <!-- Indicateurs principaux -->
-        <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
+        <div class="grid grid-cols-2 md:grid-cols-6 gap-4 mb-6">
           <div class="text-center p-4 bg-gray-50 rounded-lg">
             <p class="text-3xl font-bold text-gray-900">{{ stats.stats_bc.total }}</p>
             <p class="text-sm text-gray-500">Total BC</p>
@@ -519,6 +606,10 @@ onMounted(async () => {
           <div class="text-center p-4 bg-yellow-50 rounded-lg">
             <p class="text-3xl font-bold text-yellow-600">{{ stats.stats_bc.en_suspens || 0 }}</p>
             <p class="text-sm text-gray-500">En suspens</p>
+          </div>
+          <div class="text-center p-4 bg-cyan-50 rounded-lg">
+            <p class="text-3xl font-bold text-cyan-600">{{ stats.stats_bc.en_cours_a || 0 }}</p>
+            <p class="text-sm text-gray-500">En cours A</p>
           </div>
           <div class="text-center p-4 bg-blue-50 rounded-lg">
             <p class="text-3xl font-bold text-blue-600">{{ stats.stats_bc.cdg || 0 }}</p>
@@ -605,21 +696,44 @@ onMounted(async () => {
           </div>
         </div>
 
-        <!-- Répartition détaillée par statut -->
-        <div v-if="stats.stats_bc.repartition_statuts?.length" class="mt-6 pt-6 border-t border-gray-200">
-          <h3 class="text-sm font-medium text-gray-700 mb-4">Repartition par statut</h3>
+        <!-- Répartition par Direction -->
+        <div v-if="stats.stats_bc.repartition_directions?.length" class="mt-6 pt-6 border-t border-gray-200">
+          <h3 class="text-sm font-medium text-gray-700 mb-4">Repartition par Direction</h3>
           <div class="overflow-x-auto">
             <table class="w-full text-sm">
               <thead>
                 <tr class="border-b border-gray-200">
-                  <th class="text-left py-2 font-medium text-gray-600">Statut</th>
+                  <th class="text-left py-2 font-medium text-gray-600">Direction</th>
                   <th class="text-right py-2 font-medium text-gray-600">Nombre</th>
                   <th class="text-right py-2 font-medium text-gray-600">Montant</th>
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="item in stats.stats_bc.repartition_statuts" :key="item.statut" class="border-b border-gray-100">
-                  <td class="py-2">{{ item.label }}</td>
+                <tr v-for="item in stats.stats_bc.repartition_directions" :key="item.direction_id" class="border-b border-gray-100">
+                  <td class="py-2">{{ item.direction }}</td>
+                  <td class="text-right py-2 font-medium">{{ item.nombre }}</td>
+                  <td class="text-right py-2 text-gray-600">{{ formatMontant(item.montant) }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Répartition par Acheteur -->
+        <div v-if="stats.stats_bc.repartition_acheteurs?.length" class="mt-6 pt-6 border-t border-gray-200">
+          <h3 class="text-sm font-medium text-gray-700 mb-4">Repartition par Acheteur (en cours)</h3>
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="border-b border-gray-200">
+                  <th class="text-left py-2 font-medium text-gray-600">Acheteur</th>
+                  <th class="text-right py-2 font-medium text-gray-600">Nombre</th>
+                  <th class="text-right py-2 font-medium text-gray-600">Montant</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="item in stats.stats_bc.repartition_acheteurs" :key="item.acheteur_id" class="border-b border-gray-100">
+                  <td class="py-2">{{ item.acheteur }}</td>
                   <td class="text-right py-2 font-medium">{{ item.nombre }}</td>
                   <td class="text-right py-2 text-gray-600">{{ formatMontant(item.montant) }}</td>
                 </tr>
@@ -705,21 +819,21 @@ onMounted(async () => {
           </div>
         </div>
 
-        <!-- Top types de contrats -->
-        <div v-if="stats.stats_contrat.top_types_contrat?.length" class="pt-6 border-t border-gray-200">
-          <h3 class="text-sm font-medium text-gray-700 mb-4">Top types de contrats (par montant annuel)</h3>
+        <!-- Répartition par Direction -->
+        <div v-if="stats.stats_contrat.repartition_directions?.length" class="pt-6 border-t border-gray-200">
+          <h3 class="text-sm font-medium text-gray-700 mb-4">Repartition par Direction</h3>
           <div class="overflow-x-auto">
             <table class="w-full text-sm">
               <thead>
                 <tr class="border-b border-gray-200">
-                  <th class="text-left py-2 font-medium text-gray-600">Type</th>
+                  <th class="text-left py-2 font-medium text-gray-600">Direction</th>
                   <th class="text-right py-2 font-medium text-gray-600">Nombre</th>
                   <th class="text-right py-2 font-medium text-gray-600">Montant annuel</th>
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="item in stats.stats_contrat.top_types_contrat" :key="item.libelle" class="border-b border-gray-100">
-                  <td class="py-2">{{ item.libelle }}</td>
+                <tr v-for="item in stats.stats_contrat.repartition_directions" :key="item.direction_id" class="border-b border-gray-100">
+                  <td class="py-2">{{ item.direction }}</td>
                   <td class="text-right py-2 font-medium">{{ item.nombre }}</td>
                   <td class="text-right py-2 text-gray-600">{{ formatMontant(item.montant) }}</td>
                 </tr>
