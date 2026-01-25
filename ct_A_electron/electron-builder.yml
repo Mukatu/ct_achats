@@ -51,7 +51,7 @@ mac:
   target:
     - target: dmg
       arch: [x64, arm64]
-  icon: resources/icons/icon.icns
+  # icon: resources/icons/icon.icns  # Désactivé temporairement (bug convertisseur)
   category: public.app-category.business
 
 dmg:
