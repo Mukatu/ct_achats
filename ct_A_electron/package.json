@@ -5,6 +5,10 @@
   "main": "dist/main/index.js",
   "author": "Congo Telecom",
   "license": "proprietary",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Mukatu/ct_achats.git"
+  },
   "scripts": {
     "dev": "npm run build:main && electron .",
     "build:main": "tsc -p tsconfig.json",
