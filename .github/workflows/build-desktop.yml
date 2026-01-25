@@ -109,6 +109,9 @@ jobs:
         working-directory: ct_A_frontend
         run: npx vite build
 
+      - name: Remove icon (converter bug workaround)
+        run: rm -f ct_A_electron/resources/icons/icon.png
+
       - name: Build macOS DMG
         working-directory: ct_A_electron
         run: npx electron-builder --mac
