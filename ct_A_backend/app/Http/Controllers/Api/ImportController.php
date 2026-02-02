@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Imports\ExpressionBesoinImport;
 use App\Imports\DemandeAchatImport;
 use App\Imports\BonCommandeImport;
+use App\Imports\EngagementsConsolidesImport;
 use App\Exports\ExpressionBesoinTemplateExport;
 use App\Exports\DemandeAchatTemplateExport;
 use App\Exports\BonCommandeTemplateExport;
@@ -80,7 +81,9 @@ class ImportController extends Controller
             $response = [
                 'message' => 'Import termine',
                 'total_lignes' => $import->getRowCount(),
-                'succes' => $import->getRowCount() - count($failures) - count($errors),
+                'crees' => $import->getCreatedCount(),
+                'mis_a_jour' => $import->getUpdatedCount(),
+                'succes' => $import->getCreatedCount() + $import->getUpdatedCount(),
                 'erreurs' => [],
             ];
 
@@ -137,7 +140,9 @@ class ImportController extends Controller
             $response = [
                 'message' => 'Import termine',
                 'total_lignes' => $import->getRowCount(),
-                'succes' => $import->getRowCount() - count($failures) - count($errors),
+                'crees' => $import->getCreatedCount(),
+                'mis_a_jour' => $import->getUpdatedCount(),
+                'succes' => $import->getCreatedCount() + $import->getUpdatedCount(),
                 'erreurs' => [],
             ];
 
@@ -192,7 +197,9 @@ class ImportController extends Controller
             $response = [
                 'message' => 'Import termine',
                 'total_lignes' => $import->getRowCount(),
-                'succes' => $import->getRowCount() - count($failures) - count($errors),
+                'crees' => $import->getCreatedCount(),
+                'mis_a_jour' => $import->getUpdatedCount(),
+                'succes' => $import->getCreatedCount() + $import->getUpdatedCount(),
                 'erreurs' => [],
             ];
 
@@ -217,6 +224,70 @@ class ImportController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Erreur import BC: ' . $e->getMessage());
+
+            return response()->json([
+                'message' => 'Erreur lors de l\'import',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Importer des Engagements depuis un fichier CSV consolidé
+     * Ce format permet d'importer EB, DA et BC en une seule fois
+     * avec les liens entre eux
+     */
+    public function importEngagements(Request $request): JsonResponse
+    {
+        $request->validate([
+            'file' => 'required|file|mimes:csv,txt,xlsx,xls|max:10240',
+        ]);
+
+        try {
+            $import = new EngagementsConsolidesImport($this->numerotation);
+
+            DB::beginTransaction();
+            Excel::import($import, $request->file('file'));
+            DB::commit();
+
+            $failures = $import->failures();
+            $errors = $import->getErrors();
+            $stats = $import->getStats();
+
+            $totalCrees = $stats['eb_crees'] + $stats['da_crees'] + $stats['bc_crees'];
+            $totalMaj = $stats['eb_mis_a_jour'] + $stats['da_mis_a_jour'] + $stats['bc_mis_a_jour'];
+
+            $response = [
+                'message' => 'Import des engagements termine',
+                'total_lignes' => $import->getRowCount(),
+                'stats' => $stats,
+                'crees' => $totalCrees,
+                'mis_a_jour' => $totalMaj,
+                'succes' => $totalCrees + $totalMaj,
+                'erreurs' => [],
+            ];
+
+            foreach ($failures as $failure) {
+                $response['erreurs'][] = [
+                    'ligne' => $failure->row(),
+                    'champ' => $failure->attribute(),
+                    'messages' => $failure->errors(),
+                ];
+            }
+
+            foreach ($errors as $error) {
+                $response['erreurs'][] = [
+                    'ligne' => 0,
+                    'champ' => 'general',
+                    'messages' => [$error],
+                ];
+            }
+
+            return response()->json($response);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Erreur import engagements: ' . $e->getMessage() . "\n" . $e->getTraceAsString());
 
             return response()->json([
                 'message' => 'Erreur lors de l\'import',

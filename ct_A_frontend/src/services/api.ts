@@ -177,7 +177,7 @@ export const statistiquesService = {
 
 export const importService = {
   downloadTemplate: (type: 'eb' | 'da' | 'bc') => api.get(`/import/template/${type}`, { responseType: 'blob' }),
-  importFile: (type: 'eb' | 'da' | 'bc', formData: FormData) => api.post(`/import/${type}`, formData, {
+  importFile: (type: 'eb' | 'da' | 'bc' | 'engagements', formData: FormData) => api.post(`/import/${type}`, formData, {
     headers: { 'Content-Type': 'multipart/form-data' }
   }),
 }
@@ -190,6 +190,14 @@ export const userService = {
   delete: (id: string) => api.delete(`/users/${id}`),
   getAcheteurs: () => api.get('/users/acheteurs'),
   getValideurs: () => api.get('/users/valideurs'),
+}
+
+export const roleService = {
+  getAll: () => api.get('/roles'),
+  get: (id: string) => api.get(`/roles/${id}`),
+  create: (data: any) => api.post('/roles', data),
+  update: (id: string, data: any) => api.put(`/roles/${id}`, data),
+  delete: (id: string) => api.delete(`/roles/${id}`),
 }
 
 export const contratService = {

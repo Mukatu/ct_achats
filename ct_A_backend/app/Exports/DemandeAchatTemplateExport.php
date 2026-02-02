@@ -30,6 +30,7 @@ class DADataSheet implements FromArray, WithHeadings, WithStyles, WithColumnWidt
     public function headings(): array
     {
         return [
+            'reference_origine',
             'type_demande* (DA ou DAC)',
             'zone_code',
             'direction_code*',
@@ -47,6 +48,7 @@ class DADataSheet implements FromArray, WithHeadings, WithStyles, WithColumnWidt
     {
         return [
             [
+                'DA-EXT-001',
                 'DA',
                 'ZONE_EXEMPLE',
                 'DIR_EXEMPLE',
@@ -59,6 +61,7 @@ class DADataSheet implements FromArray, WithHeadings, WithStyles, WithColumnWidt
                 'Urgent',
             ],
             [
+                'DAC-EXT-001',
                 'DAC',
                 'ZONE_EXEMPLE',
                 'DIR_EXEMPLE',
@@ -103,16 +106,17 @@ class DADataSheet implements FromArray, WithHeadings, WithStyles, WithColumnWidt
     public function columnWidths(): array
     {
         return [
-            'A' => 22,
-            'B' => 15,
-            'C' => 18,
-            'D' => 15,
-            'E' => 35,
-            'F' => 40,
-            'G' => 18,
-            'H' => 20,
-            'I' => 15,
-            'J' => 25,
+            'A' => 20,  // reference_origine
+            'B' => 22,
+            'C' => 15,
+            'D' => 18,
+            'E' => 15,
+            'F' => 35,
+            'G' => 40,
+            'H' => 18,
+            'I' => 20,
+            'J' => 15,
+            'K' => 25,
         ];
     }
 }

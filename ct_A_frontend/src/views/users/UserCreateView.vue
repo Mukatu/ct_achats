@@ -1,11 +1,20 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { userService, referentielService } from '@/services/api'
+import { userService, referentielService, roleService } from '@/services/api'
 import {
   ArrowLeftIcon,
   CheckIcon,
+  ShieldCheckIcon,
 } from '@heroicons/vue/24/outline'
+
+interface Role {
+  id: string
+  code: string
+  libelle: string
+  description?: string
+  permissions?: string[] | Record<string, boolean>
+}
 
 const router = useRouter()
 const loading = ref(false)
@@ -13,6 +22,7 @@ const saving = ref(false)
 const errors = ref<Record<string, string[]>>({})
 
 const services = ref<{ value: string; label: string }[]>([])
+const roles = ref<Role[]>([])
 
 const form = ref({
   matricule: '',
@@ -27,18 +37,57 @@ const form = ref({
   est_acheteur: false,
   est_valideur: false,
   seuil_validation: null as number | null,
+  role_ids: [] as string[],
 })
 
 async function loadReferentiels() {
   loading.value = true
   try {
-    const response = await referentielService.getServices()
-    services.value = response.data.data || response.data
+    const [servicesResponse, rolesResponse] = await Promise.all([
+      referentielService.getServices(),
+      roleService.getAll(),
+    ])
+    services.value = servicesResponse.data.data || servicesResponse.data
+    roles.value = rolesResponse.data.data || rolesResponse.data || []
   } catch (error) {
     console.error('Erreur chargement referentiels:', error)
   } finally {
     loading.value = false
   }
+}
+
+function isRoleSelected(roleId: string): boolean {
+  return form.value.role_ids.includes(roleId)
+}
+
+function toggleRole(roleId: string) {
+  const index = form.value.role_ids.indexOf(roleId)
+  if (index === -1) {
+    form.value.role_ids.push(roleId)
+  } else {
+    form.value.role_ids.splice(index, 1)
+  }
+}
+
+function getRolePermissionsSummary(role: Role): string {
+  if (!role.permissions) return 'Aucune permission'
+
+  // Gérer le cas où permissions est un objet {"all": true} ou un tableau
+  if (typeof role.permissions === 'object' && !Array.isArray(role.permissions)) {
+    const keys = Object.keys(role.permissions)
+    if (keys.length === 0) return 'Aucune permission'
+    if ('all' in role.permissions) return 'Toutes les permissions'
+    return `${keys.length} permission(s)`
+  }
+
+  // Cas tableau
+  if (Array.isArray(role.permissions)) {
+    if (role.permissions.length === 0) return 'Aucune permission'
+    if (role.permissions.includes('all')) return 'Toutes les permissions'
+    return `${role.permissions.length} permission(s)`
+  }
+
+  return 'Aucune permission'
 }
 
 async function submitForm() {
@@ -181,6 +230,57 @@ onMounted(() => {
             <p v-if="errors.seuil_validation" class="text-red-500 text-sm mt-1">{{ errors.seuil_validation[0] }}</p>
           </div>
         </div>
+      </div>
+
+      <!-- Roles -->
+      <div class="card">
+        <div class="flex items-center gap-2 mb-4">
+          <ShieldCheckIcon class="w-5 h-5 text-ct-blue-600" />
+          <h3 class="text-lg font-semibold text-gray-900">Roles</h3>
+        </div>
+        <p class="text-sm text-gray-500 mb-4">Selectionnez les roles a attribuer a cet utilisateur. Les roles determinent les permissions d'acces.</p>
+
+        <div v-if="roles.length === 0" class="text-gray-500 text-sm py-4">
+          Aucun role disponible
+        </div>
+
+        <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div
+            v-for="role in roles"
+            :key="role.id"
+            @click="toggleRole(role.id)"
+            :class="[
+              'border rounded-lg p-4 cursor-pointer transition-all',
+              isRoleSelected(role.id)
+                ? 'border-ct-blue-500 bg-ct-blue-50 ring-1 ring-ct-blue-500'
+                : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+            ]"
+          >
+            <div class="flex items-start gap-3">
+              <input
+                type="checkbox"
+                :checked="isRoleSelected(role.id)"
+                @click.stop
+                @change="toggleRole(role.id)"
+                class="mt-1 w-4 h-4 text-ct-blue-600 rounded"
+              />
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2">
+                  <span class="font-medium text-gray-900">{{ role.libelle }}</span>
+                  <span
+                    v-if="role.code === 'ADMIN'"
+                    class="px-2 py-0.5 text-xs font-medium bg-red-100 text-red-700 rounded"
+                  >
+                    Super Admin
+                  </span>
+                </div>
+                <p class="text-sm text-gray-500 mt-1">{{ role.description || 'Pas de description' }}</p>
+                <p class="text-xs text-gray-400 mt-1">{{ getRolePermissionsSummary(role) }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <p v-if="errors.role_ids" class="text-red-500 text-sm mt-2">{{ errors.role_ids[0] }}</p>
       </div>
 
       <!-- Actions -->

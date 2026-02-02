@@ -27,6 +27,9 @@ class ExpressionBesoinImport implements ToModel, WithHeadingRow, WithValidation,
     protected string $societeId;
     protected ?string $defaultZoneId;
     protected int $rowCount = 0;
+    protected int $createdCount = 0;
+    protected int $updatedCount = 0;
+    protected int $skippedCount = 0;
     protected array $errors = [];
 
     public function __construct(NumerotationService $numerotation)
@@ -41,6 +44,17 @@ class ExpressionBesoinImport implements ToModel, WithHeadingRow, WithValidation,
     {
         $this->rowCount++;
 
+        // Vérifier si une référence d'origine est fournie
+        $referenceOrigine = !empty($row['reference_origine']) ? trim($row['reference_origine']) : null;
+
+        // Chercher un enregistrement existant avec cette référence
+        $existingEB = null;
+        if ($referenceOrigine) {
+            $existingEB = ExpressionBesoin::where('reference_origine', $referenceOrigine)
+                ->where('societe_id', $this->societeId)
+                ->first();
+        }
+
         // Trouver les références
         $zone = null;
         if (!empty($row['zone_code'])) {
@@ -49,7 +63,6 @@ class ExpressionBesoinImport implements ToModel, WithHeadingRow, WithValidation,
                 $this->errors[] = "Ligne {$this->rowCount}: Zone '{$row['zone_code']}' non trouvée";
             }
         }
-        // Si pas de zone spécifiée, utiliser la zone par défaut de l'utilisateur
         $zoneId = $zone ? $zone->id : $this->defaultZoneId;
 
         $direction = Direction::where('code', trim($row['direction_code']))->first();
@@ -91,7 +104,7 @@ class ExpressionBesoinImport implements ToModel, WithHeadingRow, WithValidation,
         // Déterminer le statut
         $statut = StatutEB::EN_SUSPENS;
         if (!empty($row['statut'])) {
-            $statutValides = ['EN_SUSPENS', 'EN_COURS_ACH'];
+            $statutValides = ['EN_SUSPENS', 'EN_COURS_ACH', 'EN_COURS_CDG', 'EN_COURS_DFC', 'EN_COURS_DG', 'TRAITE', 'ANNULE'];
             $statutInput = strtoupper(trim($row['statut']));
             if (in_array($statutInput, $statutValides)) {
                 $statut = StatutEB::from($statutInput);
@@ -108,17 +121,11 @@ class ExpressionBesoinImport implements ToModel, WithHeadingRow, WithValidation,
             }
         }
 
-        // Générer le numéro
-        $numero = $this->numerotation->genererNumero($this->societeId, 'EB');
-
-        return new ExpressionBesoin([
-            'societe_id' => $this->societeId,
-            'numero' => $numero,
-            'date_expression' => now(),
+        // Données à insérer/mettre à jour
+        $data = [
             'zone_id' => $zoneId,
             'direction_id' => $direction->id,
             'service_id' => $service?->id,
-            'demandeur_id' => Auth::id(),
             'demandeur_nom' => trim($row['demandeur_nom']),
             'objet' => trim($row['objet']),
             'description_detaillee' => $row['description_detaillee'] ?? null,
@@ -129,8 +136,28 @@ class ExpressionBesoinImport implements ToModel, WithHeadingRow, WithValidation,
             'fournisseur_suggere_id' => $fournisseurId,
             'statut' => $statut,
             'commentaire' => $row['commentaire'] ?? null,
+            'updated_by' => Auth::id(),
+        ];
+
+        // Si enregistrement existant, mettre à jour
+        if ($existingEB) {
+            $existingEB->update($data);
+            $this->updatedCount++;
+            return null; // Ne pas créer de nouvel enregistrement
+        }
+
+        // Sinon, créer un nouvel enregistrement
+        $this->createdCount++;
+        $numero = $this->numerotation->genererNumero($this->societeId, 'EB');
+
+        return new ExpressionBesoin(array_merge($data, [
+            'societe_id' => $this->societeId,
+            'numero' => $numero,
+            'reference_origine' => $referenceOrigine,
+            'date_expression' => now(),
+            'demandeur_id' => Auth::id(),
             'created_by' => Auth::id(),
-        ]);
+        ]));
     }
 
     public function rules(): array
@@ -158,6 +185,16 @@ class ExpressionBesoinImport implements ToModel, WithHeadingRow, WithValidation,
     public function getRowCount(): int
     {
         return $this->rowCount;
+    }
+
+    public function getCreatedCount(): int
+    {
+        return $this->createdCount;
+    }
+
+    public function getUpdatedCount(): int
+    {
+        return $this->updatedCount;
     }
 
     public function getErrors(): array

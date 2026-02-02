@@ -16,6 +16,14 @@ import {
   XCircleIcon,
 } from '@heroicons/vue/24/outline'
 
+interface Role {
+  id: string
+  code: string
+  libelle: string
+  description?: string
+  permissions?: string[]
+}
+
 interface User {
   id: string
   matricule: string
@@ -28,6 +36,7 @@ interface User {
   est_acheteur: boolean
   est_valideur: boolean
   seuil_validation?: number
+  roles?: Role[]
   service?: {
     id: string
     libelle: string
@@ -228,6 +237,28 @@ onMounted(() => {
               <p class="text-sm text-gray-600">Seuil de validation</p>
               <p class="font-semibold text-blue-700">{{ formatMontant(user.seuil_validation) }}</p>
             </div>
+          </div>
+
+          <!-- Roles -->
+          <div class="mt-6 pt-4 border-t border-gray-200">
+            <h4 class="text-md font-semibold text-gray-900 mb-3 flex items-center gap-2">
+              <ShieldCheckIcon class="w-5 h-5 text-ct-blue-600" />
+              Roles attribues
+            </h4>
+            <div v-if="user.roles && user.roles.length > 0" class="flex flex-wrap gap-2">
+              <span
+                v-for="role in user.roles"
+                :key="role.id"
+                :class="[
+                  'inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium',
+                  role.code === 'ADMIN' ? 'bg-red-100 text-red-800' : 'bg-ct-blue-100 text-ct-blue-800'
+                ]"
+              >
+                {{ role.libelle }}
+                <span v-if="role.code === 'ADMIN'" class="ml-1 text-xs">(Super Admin)</span>
+              </span>
+            </div>
+            <p v-else class="text-gray-500 text-sm">Aucun role attribue</p>
           </div>
         </div>
 

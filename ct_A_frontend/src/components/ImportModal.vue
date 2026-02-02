@@ -11,7 +11,7 @@ import {
   InformationCircleIcon,
 } from '@heroicons/vue/24/outline'
 
-type ImportType = 'eb' | 'da' | 'bc'
+type ImportType = 'eb' | 'da' | 'bc' | 'engagements'
 
 const props = defineProps<{
   show: boolean
@@ -30,7 +30,17 @@ const isDownloading = ref(false)
 const result = ref<{
   message: string
   total_lignes: number
+  crees: number
+  mis_a_jour: number
   succes: number
+  stats?: {
+    eb_crees: number
+    eb_mis_a_jour: number
+    da_crees: number
+    da_mis_a_jour: number
+    bc_crees: number
+    bc_mis_a_jour: number
+  }
   erreurs: Array<{
     ligne: number
     champ: string
@@ -43,6 +53,7 @@ const typeLabels: Record<ImportType, string> = {
   eb: 'Expressions de Besoins',
   da: 'Demandes d\'Achat',
   bc: 'Bons de Commande',
+  engagements: 'Engagements Consolides (EB + DA + BC)',
 }
 
 const typeLabel = computed(() => typeLabels[props.type])
@@ -188,8 +199,8 @@ function close() {
 
           <!-- Body -->
           <div class="px-6 py-4">
-            <!-- Etape 1: Télécharger le template -->
-            <div class="mb-6">
+            <!-- Etape 1: Télécharger le template (sauf pour engagements) -->
+            <div v-if="type !== 'engagements'" class="mb-6">
               <h4 class="text-sm font-medium text-gray-900 mb-2 flex items-center">
                 <span class="w-6 h-6 bg-ct-blue-100 text-ct-blue-600 rounded-full flex items-center justify-center text-xs font-bold mr-2">1</span>
                 Telecharger le modele Excel
@@ -207,14 +218,25 @@ function close() {
               </button>
             </div>
 
+            <!-- Info pour import engagements -->
+            <div v-else class="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <p class="text-sm text-blue-800">
+                <strong>Import consolide :</strong> Ce format permet d'importer simultanement les EB, DA et BC depuis un fichier CSV de suivi avec les colonnes :
+                N° EB, N° DA, N° BC, Date EB, Date DA, Date BC, Estimation, Direction, Service, Demandeur, etc.
+              </p>
+              <p class="text-xs text-blue-600 mt-2">
+                Les liens entre EB → DA → BC seront automatiquement crees.
+              </p>
+            </div>
+
             <!-- Etape 2: Remplir et uploader -->
             <div>
               <h4 class="text-sm font-medium text-gray-900 mb-2 flex items-center">
-                <span class="w-6 h-6 bg-ct-blue-100 text-ct-blue-600 rounded-full flex items-center justify-center text-xs font-bold mr-2">2</span>
-                Importer le fichier rempli
+                <span class="w-6 h-6 bg-ct-blue-100 text-ct-blue-600 rounded-full flex items-center justify-center text-xs font-bold mr-2">{{ type === 'engagements' ? '1' : '2' }}</span>
+                Importer le fichier {{ type === 'engagements' ? 'CSV' : 'rempli' }}
               </h4>
               <p class="text-sm text-gray-500 mb-3">
-                Remplissez le modele et importez-le ici. Les champs marques d'un * sont obligatoires.
+                {{ type === 'engagements' ? 'Selectionnez votre fichier CSV de suivi des engagements.' : 'Remplissez le modele et importez-le ici. Les champs marques d\'un * sont obligatoires.' }}
               </p>
 
               <!-- Zone de drop -->
@@ -286,7 +308,30 @@ function close() {
                     </p>
                     <div class="mt-2 text-sm" :class="result.erreurs.length === 0 ? 'text-green-700' : 'text-yellow-700'">
                       <p>Total lignes: {{ result.total_lignes }}</p>
-                      <p>Importees avec succes: {{ result.succes }}</p>
+                      <!-- Stats détaillées pour engagements -->
+                      <div v-if="result.stats" class="mt-2 grid grid-cols-3 gap-2 text-xs">
+                        <div class="bg-white bg-opacity-50 p-2 rounded">
+                          <p class="font-medium">EB</p>
+                          <p>Crees: {{ result.stats.eb_crees }}</p>
+                          <p>MAJ: {{ result.stats.eb_mis_a_jour }}</p>
+                        </div>
+                        <div class="bg-white bg-opacity-50 p-2 rounded">
+                          <p class="font-medium">DA/DAC</p>
+                          <p>Crees: {{ result.stats.da_crees }}</p>
+                          <p>MAJ: {{ result.stats.da_mis_a_jour }}</p>
+                        </div>
+                        <div class="bg-white bg-opacity-50 p-2 rounded">
+                          <p class="font-medium">BC</p>
+                          <p>Crees: {{ result.stats.bc_crees }}</p>
+                          <p>MAJ: {{ result.stats.bc_mis_a_jour }}</p>
+                        </div>
+                      </div>
+                      <!-- Stats simples pour imports classiques -->
+                      <template v-else>
+                        <p v-if="result.crees > 0">Creees: {{ result.crees }}</p>
+                        <p v-if="result.mis_a_jour > 0">Mises a jour: {{ result.mis_a_jour }}</p>
+                      </template>
+                      <p class="mt-1">Traitees avec succes: {{ result.succes }}</p>
                       <p v-if="result.erreurs.length > 0">Erreurs: {{ result.erreurs.length }}</p>
                     </div>
 

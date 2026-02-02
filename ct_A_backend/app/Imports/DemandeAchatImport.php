@@ -25,6 +25,8 @@ class DemandeAchatImport implements ToModel, WithHeadingRow, WithValidation, Ski
     protected string $societeId;
     protected ?string $defaultZoneId;
     protected int $rowCount = 0;
+    protected int $createdCount = 0;
+    protected int $updatedCount = 0;
     protected array $errors = [];
 
     public function __construct(NumerotationService $numerotation)
@@ -38,6 +40,17 @@ class DemandeAchatImport implements ToModel, WithHeadingRow, WithValidation, Ski
     public function model(array $row)
     {
         $this->rowCount++;
+
+        // Vérifier si une référence d'origine est fournie
+        $referenceOrigine = !empty($row['reference_origine']) ? trim($row['reference_origine']) : null;
+
+        // Chercher un enregistrement existant avec cette référence
+        $existingDA = null;
+        if ($referenceOrigine) {
+            $existingDA = DemandeAchat::where('reference_origine', $referenceOrigine)
+                ->where('societe_id', $this->societeId)
+                ->first();
+        }
 
         // Normaliser le type de demande
         $typeDemande = strtoupper(trim($row['type_demande_da_ou_dac']));
@@ -90,26 +103,40 @@ class DemandeAchatImport implements ToModel, WithHeadingRow, WithValidation, Ski
             }
         }
 
-        // Générer le numéro selon le type
-        $numero = $this->numerotation->genererNumero($this->societeId, $typeDemande);
-
-        return new DemandeAchat([
-            'societe_id' => $this->societeId,
-            'numero' => $numero,
+        // Données à insérer/mettre à jour
+        $data = [
             'type_demande' => $typeDemande,
-            'date_demande' => now(),
             'zone_id' => $zoneId,
             'direction_id' => $direction->id,
             'service_id' => $service?->id,
-            'demandeur_id' => Auth::id(),
             'acheteur_id' => $acheteurId,
             'objet' => trim($row['objet']),
             'description' => $row['description'] ?? null,
             'montant' => (float)str_replace([' ', ','], ['', '.'], $row['montant_fcfa']),
             'statut' => $statut,
             'commentaire' => $row['commentaire'] ?? null,
+            'updated_by' => Auth::id(),
+        ];
+
+        // Si enregistrement existant, mettre à jour
+        if ($existingDA) {
+            $existingDA->update($data);
+            $this->updatedCount++;
+            return null; // Ne pas créer de nouvel enregistrement
+        }
+
+        // Sinon, créer un nouvel enregistrement
+        $this->createdCount++;
+        $numero = $this->numerotation->genererNumero($this->societeId, $typeDemande);
+
+        return new DemandeAchat(array_merge($data, [
+            'societe_id' => $this->societeId,
+            'numero' => $numero,
+            'reference_origine' => $referenceOrigine,
+            'date_demande' => now(),
+            'demandeur_id' => Auth::id(),
             'created_by' => Auth::id(),
-        ]);
+        ]));
     }
 
     public function rules(): array
@@ -138,6 +165,16 @@ class DemandeAchatImport implements ToModel, WithHeadingRow, WithValidation, Ski
     public function getRowCount(): int
     {
         return $this->rowCount;
+    }
+
+    public function getCreatedCount(): int
+    {
+        return $this->createdCount;
+    }
+
+    public function getUpdatedCount(): int
+    {
+        return $this->updatedCount;
     }
 
     public function getErrors(): array

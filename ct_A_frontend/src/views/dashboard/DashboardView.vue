@@ -17,13 +17,16 @@ import {
   CalendarDaysIcon,
   DocumentDuplicateIcon,
   ExclamationTriangleIcon,
+  ArrowUpTrayIcon,
 } from '@heroicons/vue/24/outline'
+import ImportModal from '@/components/ImportModal.vue'
 
 const authStore = useAuthStore()
 const loading = ref(true)
 const stats = ref<any>(null)
 const annee = ref(new Date().getFullYear())
 const anneesDisponibles = ref<number[]>([])
+const showImportModal = ref(false)
 
 async function loadData() {
   loading.value = true
@@ -69,13 +72,30 @@ onMounted(async () => {
           Voici un aperçu de votre activité
         </p>
       </div>
-      <div class="flex items-center gap-2">
-        <CalendarDaysIcon class="w-5 h-5 text-gray-400" />
-        <select v-model="annee" class="input w-32">
-          <option v-for="a in anneesDisponibles" :key="a" :value="a">{{ a }}</option>
-        </select>
+      <div class="flex items-center gap-4">
+        <button
+          @click="showImportModal = true"
+          class="btn btn-secondary flex items-center"
+        >
+          <ArrowUpTrayIcon class="w-5 h-5 mr-2" />
+          Import CSV
+        </button>
+        <div class="flex items-center gap-2">
+          <CalendarDaysIcon class="w-5 h-5 text-gray-400" />
+          <select v-model="annee" class="input w-32">
+            <option v-for="a in anneesDisponibles" :key="a" :value="a">{{ a }}</option>
+          </select>
+        </div>
       </div>
     </div>
+
+    <!-- Modal import engagements -->
+    <ImportModal
+      :show="showImportModal"
+      type="engagements"
+      @close="showImportModal = false"
+      @success="loadData()"
+    />
 
     <!-- Loading state -->
     <div v-if="loading" class="flex justify-center py-12">
@@ -147,9 +167,9 @@ onMounted(async () => {
               <DocumentDuplicateIcon class="w-6 h-6 text-teal-600" />
             </div>
             <div class="ml-4">
-              <p class="text-sm text-gray-500">Engagements contractuels</p>
-              <p class="text-lg font-bold text-gray-900">
-                {{ formatMontant(stats?.stats_contrat?.montant_annuel_actif) }}
+              <p class="text-sm text-gray-500">Contrats actifs</p>
+              <p class="text-2xl font-bold text-gray-900">
+                {{ stats?.totaux?.contrats_actifs || 0 }}
               </p>
             </div>
           </div>
@@ -186,7 +206,7 @@ onMounted(async () => {
                 <DocumentDuplicateIcon class="w-5 h-5 text-teal-600 mr-2" />
                 <span class="text-sm font-medium text-gray-700">Engagements Contrats</span>
               </div>
-              <span class="text-lg font-bold text-teal-700">{{ formatMontant(stats?.stats_contrat?.montant_annuel_actif) }}</span>
+              <span class="text-lg font-bold text-teal-700">{{ formatMontant(stats?.totaux?.montant_engage_contrat) }}</span>
             </div>
             <p class="text-xs text-gray-500 mt-1">Contrats actifs annuels</p>
           </div>
@@ -198,7 +218,7 @@ onMounted(async () => {
               </div>
               <span class="text-lg font-bold text-purple-700">{{ formatMontant(stats?.totaux?.montant_engage) }}</span>
             </div>
-            <p class="text-xs text-gray-500 mt-1">BC + DAC</p>
+            <p class="text-xs text-gray-500 mt-1">BC + DAC + Contrats</p>
           </div>
         </div>
       </div>
@@ -220,9 +240,9 @@ onMounted(async () => {
             <p class="text-3xl font-bold text-green-600">{{ stats.stats_eb.aboutis }}</p>
             <p class="text-sm text-gray-500">Traites</p>
           </div>
-          <div class="text-center p-4 bg-blue-50 rounded-lg">
-            <p class="text-3xl font-bold text-blue-600">{{ stats.stats_eb.en_cours }}</p>
-            <p class="text-sm text-gray-500">En cours</p>
+          <div class="text-center p-4 bg-red-50 rounded-lg">
+            <p class="text-3xl font-bold text-red-600">{{ stats.stats_eb.annules || 0 }}</p>
+            <p class="text-sm text-gray-500">Annules</p>
           </div>
           <div class="text-center p-4 bg-cyan-50 rounded-lg">
             <p class="text-3xl font-bold text-cyan-600">{{ stats.stats_eb.en_cours_ach || 0 }}</p>

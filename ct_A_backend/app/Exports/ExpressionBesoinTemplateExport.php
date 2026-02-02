@@ -32,6 +32,7 @@ class EBDataSheet implements FromArray, WithHeadings, WithStyles, WithColumnWidt
     public function headings(): array
     {
         return [
+            'reference_origine',
             'zone_code',
             'direction_code*',
             'service_code',
@@ -53,6 +54,7 @@ class EBDataSheet implements FromArray, WithHeadings, WithStyles, WithColumnWidt
         // Exemple de données
         return [
             [
+                'EB-EXT-001',
                 'ZONE_EXEMPLE',
                 'DIR_EXEMPLE',
                 'SERV_EXEMPLE',
@@ -93,19 +95,20 @@ class EBDataSheet implements FromArray, WithHeadings, WithStyles, WithColumnWidt
     public function columnWidths(): array
     {
         return [
-            'A' => 15,
-            'B' => 18,
-            'C' => 15,
-            'D' => 20,
-            'E' => 30,
-            'F' => 35,
-            'G' => 18,
-            'H' => 22,
-            'I' => 18,
-            'J' => 20,
-            'K' => 18,
-            'L' => 15,
-            'M' => 25,
+            'A' => 20,  // reference_origine
+            'B' => 15,
+            'C' => 18,
+            'D' => 15,
+            'E' => 20,
+            'F' => 30,
+            'G' => 35,
+            'H' => 18,
+            'I' => 22,
+            'J' => 18,
+            'K' => 20,
+            'L' => 18,
+            'M' => 15,
+            'N' => 25,
         ];
     }
 }

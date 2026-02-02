@@ -222,5 +222,7 @@ Route::prefix('v1')->middleware(['auth:sanctum'])->group(function () {
         Route::post('/eb', [ImportController::class, 'importEB']);
         Route::post('/da', [ImportController::class, 'importDA']);
         Route::post('/bc', [ImportController::class, 'importBC']);
+        // Import consolidé (EB + DA + BC en une seule fois)
+        Route::post('/engagements', [ImportController::class, 'importEngagements']);
     });
 });

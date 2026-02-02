@@ -150,6 +150,9 @@ class DashboardController extends Controller
             ->whereNotNull('date_cloture')
             ->sum('montant_paye');
 
+        // Engagements Contrats (montant annuel des contrats actifs)
+        $engagementContrat = Contrat::where('statut', StatutContrat::ACTIF)->sum('montant_annuel');
+
         // Totaux
         $totaux = [
             'eb_total' => ExpressionBesoin::whereYear('date_expression', $annee)->count(),
@@ -158,7 +161,8 @@ class DashboardController extends Controller
             'bc_total' => BonCommande::whereYear('date_bc', $annee)->count(),
             'montant_engage_bc' => $engagementBC,
             'montant_engage_dac' => $engagementDAC,
-            'montant_engage' => $engagementBC + $engagementDAC, // Total engagements
+            'montant_engage_contrat' => $engagementContrat,
+            'montant_engage' => $engagementBC + $engagementDAC + $engagementContrat, // Total engagements (BC + DAC + Contrats)
             'dac_cloturees' => $dacCloturees,
             'fournisseurs_actifs' => Fournisseur::where('statut', 'ACTIF')->count(),
             'contrats_actifs' => Contrat::where('statut', StatutContrat::ACTIF)->count(),

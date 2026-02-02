@@ -16,6 +16,12 @@ import {
   ShoppingCartIcon,
 } from '@heroicons/vue/24/outline'
 
+interface Role {
+  id: string
+  code: string
+  libelle: string
+}
+
 interface User {
   id: string
   matricule: string
@@ -27,6 +33,7 @@ interface User {
   actif: boolean
   est_acheteur: boolean
   est_valideur: boolean
+  roles?: Role[]
   service?: {
     libelle: string
     direction?: {
@@ -215,7 +222,21 @@ onMounted(() => {
                 <span v-else class="text-gray-400">-</span>
               </td>
               <td>
-                <div class="flex gap-1">
+                <div class="flex flex-wrap gap-1">
+                  <!-- Roles assignes -->
+                  <span
+                    v-for="role in user.roles"
+                    :key="role.id"
+                    :class="[
+                      'inline-flex items-center px-2 py-0.5 rounded text-xs font-medium',
+                      role.code === 'ADMIN' ? 'bg-red-100 text-red-800' : 'bg-ct-blue-100 text-ct-blue-800'
+                    ]"
+                    :title="role.libelle"
+                  >
+                    <ShieldCheckIcon class="w-3 h-3 mr-1" />
+                    {{ role.code }}
+                  </span>
+                  <!-- Badges acheteur/valideur -->
                   <span v-if="user.est_acheteur" class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800" title="Acheteur">
                     <ShoppingCartIcon class="w-3 h-3 mr-1" />
                     ACH
@@ -224,7 +245,7 @@ onMounted(() => {
                     <ShieldCheckIcon class="w-3 h-3 mr-1" />
                     VAL
                   </span>
-                  <span v-if="!user.est_acheteur && !user.est_valideur" class="text-gray-400 text-xs">-</span>
+                  <span v-if="!user.roles?.length && !user.est_acheteur && !user.est_valideur" class="text-gray-400 text-xs">-</span>
                 </div>
               </td>
               <td>

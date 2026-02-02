@@ -20,6 +20,7 @@ class DemandeAchat extends Model
     protected $fillable = [
         'societe_id',
         'numero',
+        'reference_origine',
         'type_demande',
         'date_demande',
         'expression_besoin_id',

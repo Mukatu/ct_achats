@@ -16,8 +16,13 @@ export const useAuthStore = defineStore('auth', () => {
     user.value?.roles?.some(r => r.code === 'ACHETEUR')
   )
 
-  const isValideur = computed(() => 
+  const isValideur = computed(() =>
     user.value?.est_valideur || permissions.value.includes('all')
+  )
+
+  const isAdmin = computed(() =>
+    permissions.value.includes('all') ||
+    user.value?.roles?.some(r => r.code === 'ADMIN')
   )
 
   async function login(email: string, password: string) {
@@ -82,6 +87,7 @@ export const useAuthStore = defineStore('auth', () => {
     isAuthenticated,
     isAcheteur,
     isValideur,
+    isAdmin,
     login,
     logout,
     fetchUser,

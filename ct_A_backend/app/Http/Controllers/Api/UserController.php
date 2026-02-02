@@ -57,11 +57,22 @@ class UserController extends Controller
             'est_valideur' => 'boolean',
             'seuil_validation' => 'nullable|numeric|min:0',
             'actif' => 'boolean',
+            'role_ids' => 'sometimes|array',
+            'role_ids.*' => 'uuid|exists:roles,id',
         ]);
+
+        // Gérer les rôles séparément
+        $roleIds = $validated['role_ids'] ?? [];
+        unset($validated['role_ids']);
 
         $validated['password'] = Hash::make($validated['password']);
         $validated['actif'] = $validated['actif'] ?? true;
         $user = User::create($validated);
+
+        // Attacher les rôles si fournis
+        if (!empty($roleIds)) {
+            $user->roles()->attach($roleIds);
+        }
 
         return response()->json($user->load(['service.direction.zone', 'roles']), 201);
     }
@@ -85,6 +96,8 @@ class UserController extends Controller
             'est_valideur' => 'sometimes|boolean',
             'seuil_validation' => 'nullable|numeric|min:0',
             'actif' => 'sometimes|boolean',
+            'role_ids' => 'sometimes|array',
+            'role_ids.*' => 'uuid|exists:roles,id',
         ]);
 
         // Hash password si fourni
@@ -94,7 +107,17 @@ class UserController extends Controller
             unset($validated['password']);
         }
 
+        // Gérer les rôles séparément
+        $roleIds = $validated['role_ids'] ?? null;
+        unset($validated['role_ids']);
+
         $user->update($validated);
+
+        // Synchroniser les rôles si fournis
+        if ($roleIds !== null) {
+            $user->roles()->sync($roleIds);
+        }
+
         return response()->json($user->load(['service.direction.zone', 'roles']));
     }
 

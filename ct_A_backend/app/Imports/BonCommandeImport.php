@@ -26,6 +26,8 @@ class BonCommandeImport implements ToModel, WithHeadingRow, WithValidation, Skip
     protected string $societeId;
     protected ?string $defaultZoneId;
     protected int $rowCount = 0;
+    protected int $createdCount = 0;
+    protected int $updatedCount = 0;
     protected array $errors = [];
 
     public function __construct(NumerotationService $numerotation)
@@ -39,6 +41,17 @@ class BonCommandeImport implements ToModel, WithHeadingRow, WithValidation, Skip
     public function model(array $row)
     {
         $this->rowCount++;
+
+        // Vérifier si une référence d'origine est fournie
+        $referenceOrigine = !empty($row['reference_origine']) ? trim($row['reference_origine']) : null;
+
+        // Chercher un enregistrement existant avec cette référence
+        $existingBC = null;
+        if ($referenceOrigine) {
+            $existingBC = BonCommande::where('reference_origine', $referenceOrigine)
+                ->where('societe_id', $this->societeId)
+                ->first();
+        }
 
         // Normaliser le type BC
         $typeBC = strtoupper(trim($row['type_bc_bcalbclbcaibciipo']));
@@ -114,22 +127,16 @@ class BonCommandeImport implements ToModel, WithHeadingRow, WithValidation, Skip
             }
         }
 
-        // Générer le numéro
-        $numero = $this->numerotation->genererNumero($this->societeId, 'BC');
-
         // Calculer les montants
         $montantTVA = round($montantHT * ($tauxTVA / 100));
         $montantTTC = $montantHT + $montantTVA;
 
-        return new BonCommande([
-            'societe_id' => $this->societeId,
-            'numero' => $numero,
+        // Données à insérer/mettre à jour
+        $data = [
             'type_bc' => $typeBC,
-            'date_bc' => now(),
             'fournisseur_id' => $fournisseur->id,
             'zone_id' => $zoneId,
             'direction_id' => $direction->id,
-            'demandeur_id' => Auth::id(),
             'acheteur_id' => $acheteurId,
             'objet' => trim($row['objet']),
             'nature_prestation' => $row['nature_prestation'] ?? null,
@@ -143,8 +150,28 @@ class BonCommandeImport implements ToModel, WithHeadingRow, WithValidation, Skip
             'numero_devis' => $row['numero_devis'] ?? null,
             'statut' => $statut,
             'commentaire' => $row['commentaire'] ?? null,
+            'updated_by' => Auth::id(),
+        ];
+
+        // Si enregistrement existant, mettre à jour
+        if ($existingBC) {
+            $existingBC->update($data);
+            $this->updatedCount++;
+            return null; // Ne pas créer de nouvel enregistrement
+        }
+
+        // Sinon, créer un nouvel enregistrement
+        $this->createdCount++;
+        $numero = $this->numerotation->genererNumero($this->societeId, 'BC');
+
+        return new BonCommande(array_merge($data, [
+            'societe_id' => $this->societeId,
+            'numero' => $numero,
+            'reference_origine' => $referenceOrigine,
+            'date_bc' => now(),
+            'demandeur_id' => Auth::id(),
             'created_by' => Auth::id(),
-        ]);
+        ]));
     }
 
     public function rules(): array
@@ -174,6 +201,16 @@ class BonCommandeImport implements ToModel, WithHeadingRow, WithValidation, Skip
     public function getRowCount(): int
     {
         return $this->rowCount;
+    }
+
+    public function getCreatedCount(): int
+    {
+        return $this->createdCount;
+    }
+
+    public function getUpdatedCount(): int
+    {
+        return $this->updatedCount;
     }
 
     public function getErrors(): array

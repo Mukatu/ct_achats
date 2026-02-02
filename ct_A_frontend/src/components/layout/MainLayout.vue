@@ -156,8 +156,8 @@ onMounted(async () => {
             <span class="absolute top-1 right-1 w-2 h-2 bg-ct-orange-500 rounded-full"></span>
           </button>
 
-          <!-- Settings -->
-          <router-link to="/parametres" class="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg">
+          <!-- Settings (Admin uniquement) -->
+          <router-link v-if="authStore.isAdmin" to="/parametres" class="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg">
             <Cog6ToothIcon class="w-6 h-6" />
           </router-link>
         </div>

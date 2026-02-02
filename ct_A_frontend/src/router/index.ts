@@ -181,11 +181,37 @@ const router = createRouter({
           name: 'echeance-list',
           component: () => import('@/views/contrats/EcheanceListView.vue'),
         },
-        // Parametres
+        // Parametres (Admin uniquement)
         {
           path: 'parametres',
           name: 'settings',
           component: () => import('@/views/settings/SettingsView.vue'),
+          meta: { requiresAdmin: true },
+        },
+        // Gestion des utilisateurs (Admin uniquement)
+        {
+          path: 'utilisateurs',
+          name: 'users-list',
+          component: () => import('@/views/users/UserListView.vue'),
+          meta: { requiresAdmin: true },
+        },
+        {
+          path: 'utilisateurs/nouveau',
+          name: 'user-create',
+          component: () => import('@/views/users/UserCreateView.vue'),
+          meta: { requiresAdmin: true },
+        },
+        {
+          path: 'utilisateurs/:id',
+          name: 'user-show',
+          component: () => import('@/views/users/UserShowView.vue'),
+          meta: { requiresAdmin: true },
+        },
+        {
+          path: 'utilisateurs/:id/modifier',
+          name: 'user-edit',
+          component: () => import('@/views/users/UserEditView.vue'),
+          meta: { requiresAdmin: true },
         },
       ]
     },
@@ -200,10 +226,13 @@ const router = createRouter({
 // Navigation guard
 router.beforeEach((to, from, next) => {
   const authStore = useAuthStore()
-  
+
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {
     next({ name: 'login', query: { redirect: to.fullPath } })
   } else if (to.meta.guest && authStore.isAuthenticated) {
+    next({ name: 'dashboard' })
+  } else if (to.meta.requiresAdmin && !authStore.isAdmin) {
+    // Accès refusé aux pages admin si non admin
     next({ name: 'dashboard' })
   } else {
     next()

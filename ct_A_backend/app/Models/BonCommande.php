@@ -20,6 +20,7 @@ class BonCommande extends Model
     protected $fillable = [
         'societe_id',
         'numero',
+        'reference_origine',
         'type_bc',
         'date_bc',
         'demande_achat_id',

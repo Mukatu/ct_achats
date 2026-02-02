@@ -30,6 +30,7 @@ class BCDataSheet implements FromArray, WithHeadings, WithStyles, WithColumnWidt
     public function headings(): array
     {
         return [
+            'reference_origine',
             'type_bc* (BCAL/BCL/BCAI/BCI/IPO)',
             'fournisseur_code*',
             'zone_code',
@@ -52,6 +53,7 @@ class BCDataSheet implements FromArray, WithHeadings, WithStyles, WithColumnWidt
     {
         return [
             [
+                'BC-EXT-001',
                 'BCAL',
                 'FSSEUR001',
                 'ZONE_EXEMPLE',
@@ -94,21 +96,22 @@ class BCDataSheet implements FromArray, WithHeadings, WithStyles, WithColumnWidt
     public function columnWidths(): array
     {
         return [
-            'A' => 28,
-            'B' => 18,
-            'C' => 15,
-            'D' => 18,
-            'E' => 30,
-            'F' => 25,
-            'G' => 18,
-            'H' => 12,
-            'I' => 20,
-            'J' => 28,
-            'K' => 30,
-            'L' => 18,
-            'M' => 20,
-            'N' => 15,
-            'O' => 25,
+            'A' => 20,  // reference_origine
+            'B' => 28,
+            'C' => 18,
+            'D' => 15,
+            'E' => 18,
+            'F' => 30,
+            'G' => 25,
+            'H' => 18,
+            'I' => 12,
+            'J' => 20,
+            'K' => 28,
+            'L' => 30,
+            'M' => 18,
+            'N' => 20,
+            'O' => 15,
+            'P' => 25,
         ];
     }
 }

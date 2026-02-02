@@ -19,6 +19,7 @@ class ExpressionBesoin extends Model
     protected $fillable = [
         'societe_id',
         'numero',
+        'reference_origine',
         'date_expression',
         'zone_id',
         'direction_id',
