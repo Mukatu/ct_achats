@@ -18,6 +18,7 @@ import {
   XMarkIcon,
   BellIcon,
   DocumentDuplicateIcon,
+  UserCircleIcon,
 } from '@heroicons/vue/24/outline'
 
 const router = useRouter()
@@ -124,8 +125,16 @@ onMounted(async () => {
             </p>
           </div>
         </div>
-        <button 
+        <router-link
+          to="/profil"
           class="mt-4 w-full flex items-center px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+          @click="sidebarOpen = false"
+        >
+          <UserCircleIcon class="w-5 h-5 mr-2" />
+          Mon profil
+        </router-link>
+        <button
+          class="w-full flex items-center px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
           @click="logout"
         >
           <ArrowLeftOnRectangleIcon class="w-5 h-5 mr-2" />

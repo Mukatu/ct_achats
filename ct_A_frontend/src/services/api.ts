@@ -219,6 +219,11 @@ export const contratService = {
   getPeriodicites: () => api.get('/referentiels/periodicites-contrat'),
 }
 
+export const profileService = {
+  updateProfile: (data: any) => api.put('/me', data),
+  updatePassword: (data: any) => api.put('/me/password', data),
+}
+
 export const echeanceService = {
   getAll: (params?: any) => api.get('/echeances-contrat', { params }),
   get: (id: string) => api.get(`/echeances-contrat/${id}`),

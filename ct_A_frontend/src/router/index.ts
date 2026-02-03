@@ -181,6 +181,12 @@ const router = createRouter({
           name: 'echeance-list',
           component: () => import('@/views/contrats/EcheanceListView.vue'),
         },
+        // Profil utilisateur
+        {
+          path: 'profil',
+          name: 'profile',
+          component: () => import('@/views/profile/ProfileView.vue'),
+        },
         // Parametres (Admin uniquement)
         {
           path: 'parametres',
