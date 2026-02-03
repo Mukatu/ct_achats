@@ -4,8 +4,8 @@ import { resolve } from 'path'
 
 export default defineConfig({
   plugins: [vue()],
-  // Base relative pour Electron (file://)
-  base: './',
+  // Base '/' pour déploiement web (override avec './' pour Electron via CLI)
+  base: '/',
   resolve: {
     alias: {
       '@': resolve(__dirname, 'src'),
@@ -22,6 +22,6 @@ export default defineConfig({
   },
   build: {
     outDir: 'dist',
-    sourcemap: true,
+    sourcemap: false,
   },
 })
