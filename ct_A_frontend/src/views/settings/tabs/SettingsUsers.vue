@@ -6,6 +6,7 @@ import {
   PencilIcon,
   TrashIcon,
   XMarkIcon,
+  CheckIcon,
   MagnifyingGlassIcon,
   ShoppingCartIcon,
   ShieldCheckIcon,
@@ -171,10 +172,21 @@ async function saveUser() {
   }
 }
 
-async function deleteUser(user: User) {
-  if (!confirm(`Desactiver l'utilisateur "${user.nom} ${user.prenom}" ?`)) return
+async function toggleUserStatus(user: User) {
+  const action = user.actif ? 'désactiver' : 'réactiver'
+  if (!confirm(`${user.actif ? 'Désactiver' : 'Réactiver'} l'utilisateur "${user.nom} ${user.prenom}" ?`)) return
   try {
-    await userService.delete(user.id)
+    await userService.update(user.id, { actif: !user.actif })
+    loadData()
+  } catch (error) {
+    console.error('Erreur:', error)
+  }
+}
+
+async function deleteUser(user: User) {
+  if (!confirm(`Supprimer définitivement l'utilisateur "${user.nom} ${user.prenom}" ?\n\nCette action est irréversible.`)) return
+  try {
+    await userService.delete(user.id, { params: { force: true } })
     loadData()
   } catch (error) {
     console.error('Erreur suppression:', error)
@@ -275,10 +287,19 @@ onMounted(() => {
             </td>
             <td class="text-right">
               <div class="flex justify-end gap-1">
-                <button @click="openEdit(user)" class="p-1.5 text-gray-500 hover:text-ct-blue-600 hover:bg-gray-100 rounded">
+                <button @click="openEdit(user)" class="p-1.5 text-gray-500 hover:text-ct-blue-600 hover:bg-gray-100 rounded" title="Modifier">
                   <PencilIcon class="w-4 h-4" />
                 </button>
-                <button @click="deleteUser(user)" class="p-1.5 text-gray-500 hover:text-red-600 hover:bg-gray-100 rounded">
+                <button
+                  @click="toggleUserStatus(user)"
+                  class="p-1.5 text-gray-500 hover:bg-gray-100 rounded"
+                  :class="user.actif ? 'hover:text-orange-600' : 'hover:text-green-600'"
+                  :title="user.actif ? 'Désactiver' : 'Réactiver'"
+                >
+                  <XMarkIcon v-if="user.actif" class="w-4 h-4" />
+                  <CheckIcon v-else class="w-4 h-4" />
+                </button>
+                <button @click="deleteUser(user)" class="p-1.5 text-gray-500 hover:text-red-600 hover:bg-gray-100 rounded" title="Supprimer définitivement">
                   <TrashIcon class="w-4 h-4" />
                 </button>
               </div>

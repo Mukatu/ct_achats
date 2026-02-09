@@ -121,8 +121,15 @@ class UserController extends Controller
         return response()->json($user->load(['service.direction.zone', 'roles']));
     }
 
-    public function destroy(User $user): JsonResponse
+    public function destroy(User $user, Request $request): JsonResponse
     {
+        // Si force=true, suppression définitive (soft delete)
+        if ($request->boolean('force')) {
+            $user->delete();
+            return response()->json(['message' => 'Utilisateur supprimé']);
+        }
+
+        // Sinon, simple désactivation
         $user->update(['actif' => false]);
         return response()->json(['message' => 'Utilisateur désactivé']);
     }
