@@ -142,6 +142,7 @@ async function submit() {
       zone_id: form.value.zone_id || null,
       service_id: form.value.service_id || null,
       expression_besoin_id: form.value.expression_besoin_id || null,
+      montant: montantTotal.value,
       lignes: validLignes.map((l, index) => ({
         numero_ligne: index + 1,
         designation: l.designation,
